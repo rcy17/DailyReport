@@ -58,7 +58,7 @@ async def commit(page):
 
 
 async def process():
-    browser = await launcher.launch()
+    browser = await launcher.launch(args=['--no-sandbox', '--disable-setuid-sandbox'])
     try:
         page = await browser.newPage()
         await login(page)
@@ -77,8 +77,8 @@ async def process():
 
 def parse_arguments():
     parser = ArgumentParser()
-    parser.add_argument('-u', '--username', type=str)
-    parser.add_argument('-p', '--password', type=str)
+    parser.add_argument('-u', '--username', type=str, required=True)
+    parser.add_argument('-p', '--password', type=str, required=True)
     parser.add_argument('-i', '--interval', type=int, default=180, help='在7:00 + [0, interval]分钟的随机偏移时刻打卡')
     return parser.parse_args()
 
