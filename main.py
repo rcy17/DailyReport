@@ -6,6 +6,22 @@ from argparse import ArgumentParser
 from time import sleep
 
 
+def patch_pyppeteer():
+    """
+    This function is copied from https://github.com/miyakogi/pyppeteer/pull/160#issuecomment-448886155
+    This is a bug about chromium, and here is a simple method to temporarily fix it
+    """
+    import pyppeteer.connection
+    original_method = pyppeteer.connection.websockets.client.connect
+
+    def new_method(*args, **kwargs):
+        kwargs['ping_interval'] = None
+        kwargs['ping_timeout'] = None
+        return original_method(*args, **kwargs)
+
+    pyppeteer.connection.websockets.client.connect = new_method
+
+
 async def check_committed(page):
     """Check if today we have already committed"""
     await page.goto('https://thos.tsinghua.edu.cn/fp/view?m=fp#act=fp/myserviceapply/indexFinish')
@@ -66,11 +82,11 @@ async def process():
         if not is_committed:
             await commit(page)
             is_committed = await check_committed(page)
+            if not is_committed:
+                raise Exception('本次打卡失败')
+            print('今日打卡成功')
         else:
             print('(今天已经打卡过了)')
-        if not is_committed:
-            raise Exception('本次打卡失败')
-        print('今日打卡成功')
     finally:
         await browser.close()
 
@@ -100,12 +116,13 @@ def main():
             continue
         current = datetime.now()
         tomorrow = (current + timedelta(days=1)).replace(hour=7, minute=0, second=0)
-        next_time = tomorrow + timedelta(minutes=(random() * args.interval))
+        next_time = tomorrow + timedelta(minutes=(random() * arguments.interval))
         print('计划下次打卡时间：', next_time)
 
 
 if __name__ == '__main__':
-    args = parse_arguments()
-    username = args.username
-    password = args.password
+    patch_pyppeteer()
+    arguments = parse_arguments()
+    username = arguments.username
+    password = arguments.password
     main()
