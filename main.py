@@ -62,6 +62,11 @@ async def commit(page):
     while True:
         if wait_seconds > 30:
             raise Exception('30s内未加载完成，已自动退出(请确定您此前提交过该表，因此详细地址非空)')
+        await page.waitFor(1000)
+        element = await page.querySelector('#layui-layer-shade1')
+        if element:
+            # remove the shade layer
+            _ = await page.evaluate('document.getElementById("layui-layer-shade1").remove()')
         element = await frame.querySelector('#MQXXDZ')
         content = await frame.evaluate('(element) => { return element && element.value }', element)
         if content:
