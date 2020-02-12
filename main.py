@@ -22,17 +22,6 @@ def patch_pyppeteer():
     pyppeteer.connection.websockets.client.connect = new_method
 
 
-async def check_committed(page):
-    """Check if today we have already committed"""
-    await page.goto('https://thos.tsinghua.edu.cn/fp/view?m=fp#act=fp/myserviceapply/indexFinish')
-    await page.waitForSelector('.apply-detail-outside')
-    details = await page.querySelector('.apply-detail-outside')
-    element = await details.querySelector('li')
-    content = await page.evaluate('(element) => element.textContent', element)
-    dt = datetime.strptime(content[5:], '%Y-%m-%d %H:%M:%S')
-    return dt.date() == datetime.now().date()
-
-
 async def login(page):
     await page.goto('https://thos.tsinghua.edu.cn/')
     await page.type('#i_user', username)
@@ -47,6 +36,17 @@ async def login(page):
     await page.waitForSelector(".box[name='【日报】学生健康和出行情况报告']")
 
 
+async def check_committed(page):
+    """Check if today we have already committed"""
+    await page.goto('https://thos.tsinghua.edu.cn/fp/view?m=fp#act=fp/myserviceapply/indexFinish')
+    await page.waitForSelector('.apply-detail-outside')
+    details = await page.querySelector('.apply-detail-outside')
+    element = await details.querySelector('li')
+    content = await page.evaluate('(element) => element.textContent', element)
+    dt = datetime.strptime(content[5:], '%Y-%m-%d %H:%M:%S')
+    return dt.date() == datetime.now().date()
+
+
 async def commit(page):
     await page.goto(
         'https://thos.tsinghua.edu.cn/fp/view?m=fp#from=hall&'
@@ -57,7 +57,7 @@ async def commit(page):
         if frame.name == 'formIframe':
             break
     else:
-        raise ValueError('未找到frame: formIframe， 文件结构已改变！')
+        raise ValueError('未找到frame: formIframe,文件结构可能已改变!请到 https://github.com/rcy17/DailyReport 提一个issue～')
     wait_seconds = 0
     while True:
         if wait_seconds > 30:
@@ -73,9 +73,10 @@ async def commit(page):
             break
         await page.waitFor(1000)
         wait_seconds += 1
-    await page.waitFor(1000)
+    await page.waitFor(500)
     await page.click('#commit')
     await page.waitForNavigation()
+    await page.waitFor(1000)
 
 
 async def process():
