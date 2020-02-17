@@ -67,7 +67,7 @@ async def commit(page):
         if element:
             # remove the shade layer
             _ = await page.evaluate('document.getElementById("layui-layer-shade1").remove()')
-        element = await frame.querySelector('#MQXXDZ')
+        element = await frame.querySelector('#HJSFJCGHBRY')
         content = await frame.evaluate('(element) => { return element && element.value }', element)
         if content:
             break
