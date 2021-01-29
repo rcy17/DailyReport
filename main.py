@@ -33,7 +33,7 @@ async def login(page):
     error = await page.evaluate('(element) => Boolean(element)', element)
     if error:
         raise ValueError('帐号或密码错误！')
-    await page.waitForSelector(".box[name='【日报】学生健康和出行情况报告']")
+    await page.waitForSelector(".box[name='学生健康及出行情况报告']")
 
 
 async def check_committed(page):
@@ -50,7 +50,7 @@ async def check_committed(page):
 async def commit(page):
     await page.goto(
         'https://thos.tsinghua.edu.cn/fp/view?m=fp#from=hall&'
-        'serveID=d42b05be-1ad8-4d96-8c1e-14be2bb24e26&act=fp/serveapply')
+        'serveID=b44e2daf-0ef6-4d11-a115-0eb0d397934f&act=fp/serveapply')
     await page.waitForSelector('#formIframe')
     frames = page.frames
     for frame in frames:
@@ -67,7 +67,7 @@ async def commit(page):
         if element:
             # remove the shade layer
             _ = await page.evaluate('document.getElementById("layui-layer-shade1").remove()')
-        element = await frame.querySelector('#HJSFJCGHBRY')
+        element = await frame.querySelector('#MQXXSZ')
         content = await frame.evaluate('(element) => { return element && element.value }', element)
         if content:
             break
