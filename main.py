@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from random import random
 from argparse import ArgumentParser
 from time import sleep
+from requests import Session
 
 
 def patch_pyppeteer():
@@ -38,13 +39,19 @@ async def login(page):
 
 async def check_committed(page):
     """Check if today we have already committed"""
-    await page.goto('https://thos.tsinghua.edu.cn/fp/view?m=fp#act=fp/myserviceapply/indexFinish')
-    await page.waitForSelector('.apply-detail-outside')
-    details = await page.querySelector('.apply-detail-outside')
-    element = await details.querySelector('li')
-    content = await page.evaluate('(element) => element.textContent', element)
-    dt = datetime.strptime(content[5:], '%Y-%m-%d %H:%M:%S')
-    return dt.date() == datetime.now().date()
+    # If you know the way to post data in pyppeteer with current cookies, please tell me
+    cookies = await page.cookies()
+    session = Session()
+    for cookie in cookies:
+        session.cookies.set(**{k: cookie[k] for k in ('name', 'value', 'domain', 'path')})
+    url = 'https://thos.tsinghua.edu.cn/fp/fp/myserviceapply/getBJSXList'
+    data = {"pageNum":"1","pageSize":"10"}
+    session.headers.update({'Content-Type':'application/json;charset=UTF-8'})
+    result = session.post(url, json=data).json()
+    if not result['list']:
+        return False    # No finished issues yet
+    newest = datetime.fromisoformat(result['list'][0]['start_time'])
+    return newest.date() == datetime.now().date()
 
 
 async def commit(page):
@@ -108,12 +115,14 @@ def parse_arguments():
 def main():
     next_time = datetime.now()
     while True:
-        current = datetime.now()
-        if current < next_time:
-            sleep(60)
+        delta = (next_time - datetime.now()).total_seconds()
+        if delta > 1:
+            sleep(delta)
             continue
         try:
             asyncio.run(process())
+        except KeyboardInterrupt:
+            break
         except Exception as e:
             print(datetime.now(), type(e), e)
             if isinstance(e, ValueError):
